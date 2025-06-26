@@ -210,6 +210,7 @@ fn parseArgs(
 
     const zig_lib_dir = try fs.path.join(arena, &[_][]const u8{ root, "lib" });
     const macos_sysroot_dir = try fs.path.join(arena, &[_][]const u8{ root, "SDK", "MacOSX12.1.sdk" });
+    const macos_lib_dir = try fs.path.join(arena, &[_][]const u8{ macos_sysroot_dir, "usr", "lib" });
     const macos_frameworks_dir = try fs.path.join(arena, &[_][]const u8{ macos_sysroot_dir, "System", "Library", "Frameworks" });
     const macos_includes_dir = try fs.path.join(arena, &[_][]const u8{ macos_sysroot_dir, "usr", "include" });
     const zig_exe = try fs.path.join(
@@ -241,7 +242,13 @@ fn parseArgs(
     while (argv_it.next()) |arg|
         if (mem.eql(u8, "-targets-mac", arg)) {
             if (!mem.eql(u8, "ar", arg0_noexe)) {
+                try args.append(arena, "-isysroot");
+                try args.append(arena, macos_sysroot_dir);
+                try args.append(arena, "-L");
+                try args.append(arena, macos_lib_dir);
                 try args.append(arena, "-iframework");
+                try args.append(arena, macos_frameworks_dir);
+                try args.append(arena, "-F");
                 try args.append(arena, macos_frameworks_dir);
                 try args.append(arena, "-isystem");
                 try args.append(arena, macos_includes_dir);
@@ -249,6 +256,8 @@ fn parseArgs(
         } else {
             try args.append(arena, arg);
         };
+
+    // try args.append(arena, "-v");
 
     return ParseResults{ .exec = .{ .args = args, .env = env } };
 }

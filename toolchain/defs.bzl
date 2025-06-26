@@ -385,7 +385,7 @@ def declare_files(os):
                 "lib/tsan/**",
                 "lib/*.zig",
                 "lib/*.h",
-            ]),
+            ]) + native.glob(["SDK/**"], allow_empty=True),
         )
 
         filegroup(

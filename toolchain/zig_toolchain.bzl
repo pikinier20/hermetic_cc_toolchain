@@ -91,7 +91,11 @@ def _compilation_mode_features(ctx):
     ]
 
 def _zig_cc_toolchain_config_impl(ctx):
+    a = []
     is_mac = "macos" in ctx.attr.target
+
+    if is_mac:
+        a = a + ["-targets-mac"]
     
     compiler_flags = [
         "-I" + d
@@ -102,9 +106,7 @@ def _zig_cc_toolchain_config_impl(ctx):
         "-D__DATE__=\"redacted\"",
         "-D__TIMESTAMP__=\"redacted\"",
         "-D__TIME__=\"redacted\"",
-    ]
-    if is_mac:
-        compiler_flags = compiler_flags + ["-targets-mac"]
+    ] + a
 
     compile_and_link_flags = feature(
         name = "compile_and_link_flags",
@@ -119,7 +121,12 @@ def _zig_cc_toolchain_config_impl(ctx):
         ],
     )
 
-    link_flag_sets = []
+    link_flag_sets = [
+        flag_set(
+                actions = all_link_actions,
+                flag_groups = [flag_group(flags = a)],
+            )
+    ]
 
     if ctx.attr.linkopts:
         link_flag_sets.append(
