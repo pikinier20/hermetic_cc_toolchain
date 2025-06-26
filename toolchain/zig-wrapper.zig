@@ -239,14 +239,16 @@ fn parseArgs(
     }
 
     while (argv_it.next()) |arg|
-        try args.append(arena, arg);
-
-    if (!mem.eql(u8, "ar", arg0_noexe)) {
-        try args.append(arena, "-iframework");
-        try args.append(arena, macos_frameworks_dir);
-        try args.append(arena, "-isystem");
-        try args.append(arena, macos_includes_dir);
-    }
+        if (mem.eql(u8, "-targets-mac", arg)) {
+            if (!mem.eql(u8, "ar", arg0_noexe)) {
+                try args.append(arena, "-iframework");
+                try args.append(arena, macos_frameworks_dir);
+                try args.append(arena, "-isystem");
+                try args.append(arena, macos_includes_dir);
+            }
+        } else {
+            try args.append(arena, arg);
+        };
 
     return ParseResults{ .exec = .{ .args = args, .env = env } };
 }

@@ -91,6 +91,8 @@ def _compilation_mode_features(ctx):
     ]
 
 def _zig_cc_toolchain_config_impl(ctx):
+    is_mac = "macos" in ctx.attr.target
+    
     compiler_flags = [
         "-I" + d
         for d in ctx.attr.cxx_builtin_include_directories
@@ -101,6 +103,8 @@ def _zig_cc_toolchain_config_impl(ctx):
         "-D__TIMESTAMP__=\"redacted\"",
         "-D__TIME__=\"redacted\"",
     ]
+    if is_mac:
+        compiler_flags = compiler_flags + ["-targets-mac"]
 
     compile_and_link_flags = feature(
         name = "compile_and_link_flags",
