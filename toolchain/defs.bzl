@@ -35,6 +35,9 @@ _TARGET_MCPU = {
     "windows-x86_64": ("x86_64-windows-gnu", "baseline"),
 }
 
+_MACOS_ARM64_SDK_URL = "https://storage.googleapis.com/public-bazel-artifacts/toolchains/osxcross/aarch64/20220317-160719/x86_64-apple-darwin21.2.tar.gz"
+_MACOS_ARM64_SDK_SHA256 = "a0fda00934d9f6f17cdd62ce685d0a12751c34686df14085b72e40d5803e93a6"
+
 _compile_failed = """
 Compilation of zig-wrapper.zig failed:
 command={compile_cmd}
@@ -271,6 +274,16 @@ def _zig_repository_impl(repository_ctx):
         sha256 = repository_ctx.attr.host_platform_sha256[exec_platform],
     )
 
+    if exec_os == "macos" and exec_arch == "aarch64":
+        repository_ctx.download_and_extract(
+            auth = use_netrc(read_user_netrc(repository_ctx), [_MACOS_ARM64_SDK_URL], {}),
+            url = [ _MACOS_ARM64_SDK_URL ],
+            stripPrefix = "x-tools/x86_64-apple-darwin21.2/",
+            sha256 = _MACOS_ARM64_SDK_SHA256,
+        )
+
+        repository_ctx.delete("SDK/MacOSX12.1.sdk/usr/share/")
+
     for target_config in target_structs():
         tool_path = zig_tool_path(exec_os).format(
             zig_tool = "c++",
@@ -353,7 +366,7 @@ def declare_files(os):
                 ":zig",
                 ":{}_includes".format(target_config.zigtarget),
                 cxx_tool_label,
-            ],
+            ] + native.glob(["SDK/**"], allow_empty=True),
         )
 
         filegroup(

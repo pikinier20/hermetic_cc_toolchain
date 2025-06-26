@@ -142,9 +142,9 @@ fn spawnWindows(arena: mem.Allocator, params: ExecParams) u8 {
     proc.env_map = &params.env;
     const ret = proc.spawnAndWait() catch |err|
         return fatal(
-        "error spawning {s}: {s}\n",
-        .{ params.args.items[0], @errorName(err) },
-    );
+            "error spawning {s}: {s}\n",
+            .{ params.args.items[0], @errorName(err) },
+        );
 
     switch (ret) {
         .Exited => |code| return code,
@@ -209,6 +209,9 @@ fn parseArgs(
     };
 
     const zig_lib_dir = try fs.path.join(arena, &[_][]const u8{ root, "lib" });
+    const macos_sysroot_dir = try fs.path.join(arena, &[_][]const u8{ root, "SDK", "MacOSX12.1.sdk" });
+    const macos_frameworks_dir = try fs.path.join(arena, &[_][]const u8{ macos_sysroot_dir, "System", "Library", "Frameworks" });
+    const macos_includes_dir = try fs.path.join(arena, &[_][]const u8{ macos_sysroot_dir, "usr", "include" });
     const zig_exe = try fs.path.join(
         arena,
         &[_][]const u8{ root, "zig" ++ EXE },
@@ -237,6 +240,13 @@ fn parseArgs(
 
     while (argv_it.next()) |arg|
         try args.append(arena, arg);
+
+    if (!mem.eql(u8, "ar", arg0_noexe)) {
+        try args.append(arena, "-iframework");
+        try args.append(arena, macos_frameworks_dir);
+        try args.append(arena, "-isystem");
+        try args.append(arena, macos_includes_dir);
+    }
 
     return ParseResults{ .exec = .{ .args = args, .env = env } };
 }
