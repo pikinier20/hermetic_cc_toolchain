@@ -38,6 +38,9 @@ _TARGET_MCPU = {
 _MACOS_ARM64_SDK_URL = "https://storage.googleapis.com/public-bazel-artifacts/toolchains/osxcross/aarch64/20220317-160719/x86_64-apple-darwin21.2.tar.gz"
 _MACOS_ARM64_SDK_SHA256 = "a0fda00934d9f6f17cdd62ce685d0a12751c34686df14085b72e40d5803e93a6"
 
+_MACOS_X64_SDK_URL = "https://storage.googleapis.com/public-bazel-artifacts/toolchains/osxcross/x86_64/20220317-165434/x86_64-apple-darwin21.2.tar.gz"
+_MACOS_X64_SDK_SHA256 = "751365dbfb5db66fe8e9f47fcf82cbbd7d1c176b79112ab91945d1be1d160dd5"
+
 _compile_failed = """
 Compilation of zig-wrapper.zig failed:
 command={compile_cmd}
@@ -274,12 +277,19 @@ def _zig_repository_impl(repository_ctx):
         sha256 = repository_ctx.attr.host_platform_sha256[exec_platform],
     )
 
-    if exec_os == "macos" and exec_arch == "aarch64":
+    if exec_os == "macos":
+        if exec_arch == "aarch64":
+            link = _MACOS_ARM64_SDK_URL
+            sha256 = _MACOS_ARM64_SDK_SHA256
+        else:
+            link = _MACOS_X64_SDK_URL
+            sha256 = _MACOS_X64_SDK_SHA256
+            
         repository_ctx.download_and_extract(
-            auth = use_netrc(read_user_netrc(repository_ctx), [_MACOS_ARM64_SDK_URL], {}),
-            url = [ _MACOS_ARM64_SDK_URL ],
+            auth = use_netrc(read_user_netrc(repository_ctx), [link], {}),
+            url = [ link ],
             stripPrefix = "x-tools/x86_64-apple-darwin21.2/",
-            sha256 = _MACOS_ARM64_SDK_SHA256,
+            sha256 = sha256,
         )
 
         repository_ctx.delete("SDK/MacOSX12.1.sdk/usr/share/")
